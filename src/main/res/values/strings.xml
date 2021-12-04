@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Muse</string>
+    <string name="header">Muse</string>
+    <string name="songs">歌曲</string>
+    <string name="singer">歌手</string>
+    <string name="favorite">收藏</string>
+    <string name="time">00:00</string>
+    <string name="play">播放</string>
+    <string name="exit">退出</string>
+    <string name="circ">循环</string>
+    <string name="shuf">随机</string>
+
+    <string name="random">1</string>
+
+    <string name="settings">设置</string>
+    <string name="settings_header">设置</string>
+    <string name="theme">主题</string>
+</resources>
