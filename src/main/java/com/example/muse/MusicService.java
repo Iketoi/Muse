@@ -67,7 +67,7 @@ public class MusicService extends Service {
 
 
     class MusicControl extends Binder{//Binder是一种跨进程的通信方式
-        public void play(int songNum){//String path
+        public void play(int songNum){
             try{
                 play_st(songNum);
                 String dataSource = songList.get(songNum).getDatasource();
@@ -75,13 +75,12 @@ public class MusicService extends Service {
                 player.setDataSource(dataSource);
                 player.prepare();
                 player.start();
-                Music_Activity.animator.start();
                 addTimer();
+                Music_Activity.animator.start();
                 player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                     @Override
                     public void onCompletion(MediaPlayer mediaPlayer) {
                         next(songNum);
-
                     }
                 });
             }catch(Exception e){
@@ -97,8 +96,6 @@ public class MusicService extends Service {
             if (player.isPlaying()){
                 player.pause();
                 Music_Activity.animator.pause();
-//                MainActivity.animator.pause();
-
             }else{
                 if(!player.isPlaying()){
 //                    Music_Activity.animator.isPaused()
@@ -138,6 +135,12 @@ public class MusicService extends Service {
             }else{
                 player.setLooping(true);
                 Toast.makeText(Music_Activity.btn_loop.getContext(), "已开启循环",Toast.LENGTH_SHORT).show();
+                player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    @Override
+                    public void onCompletion(MediaPlayer mediaPlayer) {
+                        Music_Activity.animator.start();
+                    }
+                });
             }
         }
 

@@ -6,6 +6,8 @@
     <string name="favorite">收藏</string>
     <string name="time">00:00</string>
     <string name="play">播放</string>
+    <string name="prev">上一首</string>
+    <string name="next">下一首</string>
     <string name="exit">退出</string>
     <string name="circ">循环</string>
     <string name="shuf">随机</string>

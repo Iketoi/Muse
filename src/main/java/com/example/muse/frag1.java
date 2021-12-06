@@ -38,6 +38,8 @@ public class frag1 extends Fragment {
                 intent.putExtra("position",String.valueOf(i));
                 Log.e("发送",String.valueOf(i));
                 MainActivity.p = 1;
+                MainActivity.playmode=false;
+                MainActivity.musicControl_net.pausePlay();
                 startActivity(intent);
 
             }

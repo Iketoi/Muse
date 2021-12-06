@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -30,7 +31,7 @@ public class Music_Activity extends AppCompatActivity implements View.OnClickLis
     private static TextView bar_progress,bar_total;
     public static TextView song_name,count,singer_name;
     public static ImageView iv_music;
-    public static Button btn_loop;
+    public static ImageButton btn_loop;
     public static ObjectAnimator animator;
     public static MusicService.MusicControl musicControl;
     public static ArrayList<Song> songList;
@@ -190,7 +191,6 @@ public class Music_Activity extends AppCompatActivity implements View.OnClickLis
         @Override
         public void onServiceDisconnected(ComponentName name){
             unbind(isUnbind);
-//            stopService(intent2);
             Log.e("服务","已断开");
         }
     }

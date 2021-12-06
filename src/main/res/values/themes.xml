@@ -2,7 +2,7 @@
     <!-- Base application theme. -->
 
 
-    <style name="Theme.Muse" parent="Theme.MaterialComponents.DayNight.DarkActionBar.Bridge">
+    <style name="Theme.Muse" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/sky_blue</item>
         <item name="colorPrimaryVariant">@color/sky_blue</item>
@@ -18,7 +18,7 @@
         <!-- Customize your theme here. -->
     </style>
 
-    <style name="Theme.Pink" parent="Theme.MaterialComponents.DayNight.DarkActionBar.Bridge">
+    <style name="Theme.Pink" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/pink_b</item>
         <item name="colorPrimaryVariant">@color/pink_b</item>
