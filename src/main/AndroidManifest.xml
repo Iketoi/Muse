@@ -25,6 +25,10 @@
             android:name=".NetMusic_Activity"
             android:exported="true" />
 
+        <activity
+            android:name=".NetList_Activity"
+            android:exported="true" />
+
         <service
             android:name=".MusicService"
             android:enabled="true"/>

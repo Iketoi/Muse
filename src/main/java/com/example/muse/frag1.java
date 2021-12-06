@@ -16,7 +16,6 @@ import androidx.fragment.app.Fragment;
 
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.Random;
 
 public class frag1 extends Fragment {
     public static ArrayList<Song> songList;
@@ -65,7 +64,7 @@ public class frag1 extends Fragment {
         public View getView(int i ,View convertView, ViewGroup parent) {
 
 
-            View view=View.inflate(frag1.this.getContext(),R.layout.item_layout,null);
+            View view=View.inflate(frag1.this.getContext(),R.layout.item_song,null);
             ImageView iv_cover=view.findViewById(R.id.cover);
             TextView tv_songs=view.findViewById(R.id.song_name);
             TextView tv_singer=view.findViewById(R.id.singer);

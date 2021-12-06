@@ -107,10 +107,7 @@ public class MusicService extends Service {
                     }else{
                         Log.e("animator","restart");
                         Music_Activity.animator.start();
-
                     }
-
-//                    MainActivity.animator.resume();
                 }
             }
         }
