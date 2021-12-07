@@ -2,6 +2,9 @@ package com.example.muse;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,7 +14,9 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import java.util.ArrayList;
@@ -20,36 +25,53 @@ import java.util.Objects;
 public class frag1 extends Fragment {
     public static ArrayList<Song> songList;
     private View view;
+
+    private Handler f1handler = new Handler(Looper.myLooper()){
+        @Override
+        public void handleMessage(@NonNull Message msg){
+            super.handleMessage(msg);
+            if(msg.what==1){
+                songList = (ArrayList<Song>) msg.obj;
+                ListView listView= view.findViewById(R.id.lv);
+                MyBaseAdapter myBaseAdapter = new MyBaseAdapter();
+                listView.setAdapter(myBaseAdapter);
+                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                        Intent intent=new Intent(frag1.this.getContext(),Music_Activity.class);
+                        intent.putExtra("position",String.valueOf(i));
+                        Log.e("发送",String.valueOf(i));
+                        MainActivity.p = 1;
+                        if(MainActivity.playmode){
+                            MainActivity.playmode=false;
+                            Log.e("playmode",String.valueOf(MainActivity.playmode));
+                        }
+                        if(MainActivity.conn_net!=null){
+                            MainActivity.musicControl_net.pausePlay();
+                        }
+                        startActivity(intent);
+
+                    }
+                } );
+                Log.e("handler","接收到消息");
+            }
+        }
+    };//处理子线程中的数据
     @Override
     public View onCreateView(final LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         view = inflater.inflate(R.layout.music_list, null);
-        ListView listView= view.findViewById(R.id.lv);
-        songList = getSongInfo();
-        MyBaseAdapter myBaseAdapter = new MyBaseAdapter();
-        listView.setAdapter(myBaseAdapter);
-
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        new Thread(new Runnable() {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-//                Intent intent=new Intent(frag1.this.getContext(),Music_Activity.class);
-                Intent intent=new Intent(frag1.this.getContext(),Music_Activity.class);
-                intent.putExtra("name",songList.get(i).getFileName());
-                intent.putExtra("position",String.valueOf(i));
-                Log.e("发送",String.valueOf(i));
-                MainActivity.p = 1;
-                MainActivity.playmode=false;
-                MainActivity.musicControl_net.pausePlay();
-                startActivity(intent);
-
+            public void run() {
+                songList = new ArrayList<>();
+                songList=SongInfo.getAllSongs(Objects.requireNonNull(frag1.this.getActivity()));
+                Message msg = new Message();
+                msg.what = 1;
+                msg.obj = songList;
+                f1handler.sendMessage(msg);
             }
-        } );
+        }).start();
         return view;
-    }
-
-    public ArrayList<Song> getSongInfo(){
-        songList = new ArrayList<>();
-        songList=SongInfo.getAllSongs(Objects.requireNonNull(frag1.this.getActivity()));
-        return songList;
     }
 
     class MyBaseAdapter extends BaseAdapter {
@@ -74,6 +96,6 @@ public class frag1 extends Fragment {
             tv_singer.setText(songList.get(i).getSinger());
             return view;
         }
-    }
+    }//继承适配器渲染列表
 }
 

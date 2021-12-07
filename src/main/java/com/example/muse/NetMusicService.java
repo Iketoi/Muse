@@ -1,18 +1,20 @@
 package com.example.muse;
 
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
 import org.json.JSONArray;
@@ -33,11 +35,23 @@ public class NetMusicService extends Service {
     private Timer timer;
     public static boolean isShuffle = false;
     private static String result;
-    private String myurl = "http://139.196.76.67:3000/song/url?id=";
-    private final String r_type = "POST";
+    private static ArrayList<Song_Net> song_nets;
 
+
+    public static Handler Nmshandler = new Handler(Looper.myLooper()){
+        @Override
+        public void handleMessage(@NonNull Message msg){
+            super.handleMessage(msg);
+            if(msg.what==1){
+                song_nets= (ArrayList<Song_Net>) msg.obj;
+                Log.e("handler","接收到全新集合");
+            }
+        }
+    };//播放音乐的handler
     @Override
     public IBinder onBind(Intent intent){
+        song_nets=NetList_Activity.song_nets;
+        Log.e("ibinder","绑定成功");
         return new NetMusicService.MusicControl();
     }
     @Override
@@ -49,6 +63,8 @@ public class NetMusicService extends Service {
         super.onCreate();
         player=new MediaPlayer();
 
+//        Log.e("song_nets_init",song_nets.get(0).getTitle());
+
 
     }
     public void addTimer(){ //添加计时器用于设置音乐播放器中的播放进度条
@@ -57,13 +73,11 @@ public class NetMusicService extends Service {
             TimerTask task=new TimerTask() {
                 @Override
                 public void run() {
-                    if (player==null) return;
-                    int duration=player.getDuration();//获取歌曲总时长
+                    if (player==null) return;//获取歌曲总时长
                     int currentPosition=player.getCurrentPosition();//获取播放进度
                     Message msg=NetMusic_Activity.handler.obtainMessage();//创建消息对象
                     //将音乐的总时长和播放进度封装至消息对象中
                     Bundle bundle=new Bundle();
-                    bundle.putInt("duration",duration);
                     bundle.putInt("currentPosition",currentPosition);
                     msg.setData(bundle);
                     //将消息发送到主线程的消息队列
@@ -76,26 +90,37 @@ public class NetMusicService extends Service {
     }
 
 
-    class MusicControl extends Binder {//Binder是一种跨进程的通信方式
-        public void play(String song_url){
-            try {
-                Uri uri = Uri.parse(song_url);
-                player.reset();
-                player.setDataSource(NetMusic_Activity.iv_music.getContext(),uri);
-                player.prepare();
-                player.start();
-                addTimer();
-                NetMusic_Activity.animator.start();
-//                player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-//                    @Override
-//                    public void onCompletion(MediaPlayer mediaPlayer) {
-//                        next();
-//                    }
-//                });
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+
+    class MusicControl extends Binder {//Binder是一种跨进程的通信方式
+        public void play(int songNum){
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Log.e("song_nets_start",song_nets.get(0).getTitle());
+                        Uri uri = Uri.parse(song_nets.get(songNum).getUrl());
+                        player.reset();
+                        player.setDataSource(NetMusic_Activity.iv_music.getContext(),uri);
+                        player.prepare();
+                        player.start();
+                        addTimer();
+                        Log.e("duration",String.valueOf(song_nets.get(songNum).getDuration()));
+                        player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                            @Override
+                            public void onCompletion(MediaPlayer mediaPlayer) {
+                                next(songNum);
+                            }
+                        });
+                        Message msg = new Message();
+                        msg.what=1;
+                        msg.obj=songNum;
+                        NetMusic_Activity.Nmhandler.sendMessage(msg);
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
         }
         public void pausePlay(){
             player.pause();
@@ -105,11 +130,12 @@ public class NetMusicService extends Service {
         public void porc() throws IOException {
             if (player.isPlaying()){
                 player.pause();
+                NetMusic_Activity.btn_porc.setImageDrawable(getDrawable(R.drawable.btn_pause));
                 NetMusic_Activity.animator.pause();
             }else{
                 if(!player.isPlaying()){
-//                    Music_Activity.animator.isPaused()
                     player.start();
+                    NetMusic_Activity.btn_porc.setImageDrawable(getDrawable(R.drawable.btn_pause));
                     Log.e("player","start");
                     if(NetMusic_Activity.animator.isPaused()){
                         Log.e("animator","ispaused");
@@ -117,10 +143,7 @@ public class NetMusicService extends Service {
                     }else{
                         Log.e("animator","restart");
                         NetMusic_Activity.animator.start();
-
                     }
-
-//                    MainActivity.animator.resume();
                 }
             }
         }
@@ -128,15 +151,15 @@ public class NetMusicService extends Service {
             player.seekTo(progress);
         }
 
-//        public void shuffle(){
-//            if(!isShuffle){
-//                isShuffle=true;
-//                Toast.makeText(NetMusic_Activity.btn_loop.getContext(), "开启随机播放",Toast.LENGTH_SHORT).show();
-//            }else{
-//                isShuffle=false;
-//                Toast.makeText(NetMusic_Activity.btn_loop.getContext(), "关闭随机播放",Toast.LENGTH_SHORT).show();
-//            }
-//        }
+        public void shuffle(){
+            if(!isShuffle){
+                isShuffle=true;
+                Toast.makeText(NetMusic_Activity.btn_shuf.getContext(), "开启随机播放",Toast.LENGTH_SHORT).show();
+            }else{
+                isShuffle=false;
+                Toast.makeText(NetMusic_Activity.btn_loop.getContext(), "关闭随机播放",Toast.LENGTH_SHORT).show();
+            }
+        }
 
         public void setLooping(){
             if(player.isLooping()){
@@ -154,34 +177,34 @@ public class NetMusicService extends Service {
             }
         }
 
-//        public void next(int songNum){
-//            if(isShuffle){
-//                Random random = new Random();
-//                int r= random.nextInt(songList.size());
-//                while(r==songNum){
-//                    r= random.nextInt(songList.size());
-//                }
-//                songNum=r;
-//                Toast.makeText(Music_Activity.btn_loop.getContext(), "随机播放下一首",Toast.LENGTH_SHORT).show();
-//            }else{
-//                songNum = songNum == songList.size() - 1 ? 0 : songNum + 1;
-//            }
-//            play(songNum);
-//        }
-//        public void prev(int songNum){
-//            if(isShuffle){
-//                Random random = new Random();
-//                int r= random.nextInt(songList.size());
-//                while(r==songNum){
-//                    r= random.nextInt(songList.size());
-//                }
-//                songNum=r;
-//                Toast.makeText(Music_Activity.btn_loop.getContext(), "随机播放上一首",Toast.LENGTH_SHORT).show();
-//            }else{
-//                songNum = songNum == 0 ? songList.size() - 1 : songNum - 1;
-//            }
-//            play(songNum);
-//        }
+        public void next(int songNum){
+            if(isShuffle){
+                Random random = new Random();
+                int r= random.nextInt(song_nets.size());
+                while(r==songNum){
+                    r= random.nextInt(song_nets.size());
+                }
+                songNum=r;
+                Toast.makeText(Music_Activity.btn_loop.getContext(), "随机播放下一首",Toast.LENGTH_SHORT).show();
+            }else{
+                songNum = songNum == song_nets.size() - 1 ? 0 : songNum + 1;
+            }
+            play(songNum);
+        }
+        public void prev(int songNum){
+            if(isShuffle){
+                Random random = new Random();
+                int r= random.nextInt(song_nets.size());
+                while(r==songNum){
+                    r= random.nextInt(song_nets.size());
+                }
+                songNum=r;
+                Toast.makeText(Music_Activity.btn_loop.getContext(), "随机播放上一首",Toast.LENGTH_SHORT).show();
+            }else{
+                songNum = songNum == 0 ? song_nets.size() - 1 : songNum - 1;
+            }
+            play(songNum);
+        }
     }
 
 //    public void play_st(int songNum){
@@ -225,14 +248,7 @@ public class NetMusicService extends Service {
         return result;
     }
 
-    public static String parseJson(String ori_content) throws Exception {
-        JSONObject ori_json = new JSONObject(ori_content);
-        JSONArray data = ori_json.getJSONArray("data");
-        JSONObject realdata = data.getJSONObject(0);
-        String url = realdata.getString("url");
-        Log.e("realurl",url);
-        return url;
-    }
+
 
     @Override
     public void onDestroy(){

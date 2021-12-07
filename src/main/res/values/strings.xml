@@ -12,6 +12,8 @@
     <string name="circ">循环</string>
     <string name="shuf">随机</string>
 
+    <string name="loading">加 载 中</string>
+
     <string name="random">1</string>
 
     <string name="settings">设置</string>

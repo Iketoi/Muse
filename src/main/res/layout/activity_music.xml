@@ -6,7 +6,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".Music_Activity"
     android:gravity="center"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/white">
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -46,8 +47,8 @@
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/iv_music"
-        android:layout_width="270dp"
-        android:layout_height="270dp"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
         app:civ_border_width="5dp"
         app:civ_border_color="@color/sky_blue"
         android:layout_marginTop="100dp"
@@ -60,14 +61,22 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="90dp"
+        android:max="100"
+        android:maxHeight="6.0dip"
+        android:minHeight="6.0dip"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:progressDrawable="@drawable/st_seekbar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/iv_music"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        android:thumb="@color/sky_blue"/>
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingLeft="8dp"
         android:paddingRight="8dp"
+        android:layout_marginTop="5dp"
         android:id="@+id/number"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/bar"
@@ -91,8 +100,9 @@
         android:orientation="horizontal"
         android:id="@+id/controller"
         android:layout_marginTop="60dp"
+        android:layout_marginBottom="20dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/bottombar">
+        app:layout_constraintBottom_toBottomOf="parent">
         <ImageButton
             android:id="@+id/btn_loop"
             android:layout_width="wrap_content"
@@ -122,13 +132,14 @@
             app:layout_constraintBottom_toBottomOf="parent"
             android:contentDescription="@string/prev" />
 
-        <Button
+        <ImageButton
             android:id="@+id/btn_porc"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
             android:layout_weight="1"
             android:background="@drawable/btn_bg_selector"
+            app:srcCompat="@drawable/btn_play"
             app:layout_constraintStart_toEndOf="@id/btn_prev"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toStartOf="@id/btn_next"
@@ -163,26 +174,6 @@
             android:contentDescription="@string/shuf"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:id="@+id/bottombar"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-
-        <Button
-            android:id="@+id/btn_exit"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_margin="8dp"
-            android:layout_weight="1"
-            android:background="@drawable/btn_bg_selector"
-            android:text="@string/exit"/>
-
-
-    </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

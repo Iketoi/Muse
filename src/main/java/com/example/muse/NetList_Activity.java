@@ -1,8 +1,10 @@
 package com.example.muse;
 
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,25 +14,111 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 
 public class NetList_Activity extends AppCompatActivity{
-    private static String id,keyword,musicurl;
+    private static String id,keyword;
     private static String listurl = "http://139.196.76.67:3000/playlist/track/all?id=";
     private static String result;
     private static String searchurl="http://139.196.76.67:3000/search?keywords=";
-    private static String myurl = "http://139.196.76.67:3000/song/detail?ids=";
-    private static String[][] songlist;
     private static ListView listview;
+    private static TextView loading,total,progress;
+    public static ArrayList<Song_Net> song_nets;
 
+    private Handler Nlhandler = new Handler(Looper.myLooper()){
+        @Override
+        public void handleMessage(@NonNull Message msg){
+            super.handleMessage(msg);
+            if(msg.what==0){
+                song_nets = (ArrayList<Song_Net>) msg.obj;
+                MyBaseAdapter myBaseAdapter = new MyBaseAdapter();
+                loading.setText("");
+                total.setText("");
+                progress.setText("");
+                listview.setAdapter(myBaseAdapter);
+                listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                        Intent intent=new Intent(NetList_Activity.this.getApplicationContext(),NetMusic_Activity.class);
+                        intent.putExtra("id",song_nets.get(i).getId());
+                        intent.putExtra("position",String.valueOf(i));
+                        MainActivity.netid.setText(song_nets.get(i).getId());
+                        MainActivity.musicControl.pausePlay();
+                        if(!MainActivity.playmode){
+                            MainActivity.playmode=true;
+                            Log.e("playmode",String.valueOf(MainActivity.playmode));
+                        }
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Message msg = new Message();
+                                msg.what=1;
+                                msg.obj = song_nets;
+                                NetMusicService.Nmshandler.sendMessage(msg);
+                            }
+                        }).start();
+                        startActivity(intent);
+                    }
+                } );
+                Log.e("handler","接收到消息");
+            }
+            if(msg.what==1){
+                loading = findViewById(R.id.loading);
+                song_nets = (ArrayList<Song_Net>) msg.obj;
+                MyBaseAdapter myBaseAdapter = new MyBaseAdapter();
+                listview.setAdapter(myBaseAdapter);
+                loading.setText("");
+                listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                        Intent intent=new Intent(NetList_Activity.this.getApplicationContext(),NetMusic_Activity.class);
+                        intent.putExtra("id",song_nets.get(i).getId());
+                        intent.putExtra("position",String.valueOf(i));
+                        MainActivity.netid.setText(song_nets.get(i).getId());
+                        MainActivity.musicControl.pausePlay();
+                        if(!MainActivity.playmode){
+                            MainActivity.playmode=true;
+                            Log.e("playmode",String.valueOf(MainActivity.playmode));
+                        }
+
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Message msg = new Message();
+                                msg.what=1;
+                                msg.obj = song_nets;
+                                NetMusicService.Nmshandler.sendMessage(msg);
+                            }
+                        }).start();
+                        startActivity(intent);
+                    }
+                } );
+            }
+        }
+    };
+
+    public static Handler progresshandler = new Handler(Looper.myLooper()){
+        @Override
+        public void handleMessage(@NonNull Message msg){
+            super.handleMessage(msg);
+            if(msg.what==0){
+                Bundle bundle = (Bundle) msg.obj;
+                progress.setText(String.valueOf(bundle.getInt("progress")+1));
+                total.setText(String.valueOf(bundle.getInt("total")));
+                int pro = bundle.getInt("progress")+1;
+                if(pro ==bundle.getInt("total")){
+                    loading.setText("加 载 完 毕");
+                }
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,42 +133,56 @@ public class NetList_Activity extends AppCompatActivity{
 
     public void init() throws Exception{
         listview= findViewById(R.id.lv);
+        total = findViewById(R.id.total);
+        progress = findViewById(R.id.progress);
+        loading = findViewById(R.id.loading);
         Intent intent = getIntent();
         if(intent.hasExtra("id")){
             id = intent.getStringExtra("id");
-            listurl = listurl+id;
-            String ori_content = connect(listurl);
-            songlist = parseJson_songlist_click(ori_content);
-            MyBaseAdapter myBaseAdapter = new MyBaseAdapter();
-            listview.setAdapter(myBaseAdapter);
-            listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            listurl = listurl+id+"&limit=15";
+            new Thread(new Runnable() {
                 @Override
-                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                    Intent intent=new Intent(NetList_Activity.this.getApplicationContext(),NetMusic_Activity.class);
-                    intent.putExtra("id",songlist[i][1]);
-                    MainActivity.netid.setText(id);
-                    startActivity(intent);
+                public void run() {
+                    String ori_content = connect(listurl);
+                    listurl = "http://139.196.76.67:3000/playlist/track/all?id=";
+                    try {
+                        song_nets = new ArrayList<>();
+                        song_nets=Song_NetInfo.getAllsongs_click(ori_content);
+                        Message msg = new Message();
+                        msg.what=0;
+                        msg.obj = song_nets;
+                        Nlhandler.sendMessage(msg);
+                        Log.e("position","here");
+                        Log.e("listinfo_mainthread", String.valueOf(song_nets));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
-            } );
-        }if(intent.hasExtra("keyword")){
+            }).start();
+        }
+        if(intent.hasExtra("keyword")){
             keyword = intent.getStringExtra("keyword");
             searchurl = searchurl+keyword;
             Log.e("searchurl",searchurl);
-            String ori_content = connect(searchurl);
-            songlist = parseJson_songlist_search(ori_content);
-            searchurl="http://139.196.76.67:3000/search?keywords=";
-            MyBaseAdapter myBaseAdapter = new MyBaseAdapter();
-            listview.setAdapter(myBaseAdapter);
-            listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            new Thread(new Runnable() {
                 @Override
-                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                    Intent intent=new Intent(NetList_Activity.this.getApplicationContext(),NetMusic_Activity.class);
-                    intent.putExtra("id",songlist[i][1]);
-                    MainActivity.netid.setText(songlist[i][1]);
-                    MainActivity.musicControl_net.pausePlay();
-                    startActivity(intent);
+                public void run() {
+                    String ori_content = connect(searchurl);
+                    searchurl="http://139.196.76.67:3000/search?keywords=";
+                    try {
+                        song_nets = new ArrayList<>();
+                        song_nets=Song_NetInfo.getAllsongs_search(ori_content);
+                        Message msg = new Message();
+                        msg.what=1;
+                        msg.obj = song_nets;
+                        Nlhandler.sendMessage(msg);
+                        Log.e("position","here");
+                        Log.e("listinfo_mainthread", String.valueOf(song_nets));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
-            } );
+            }).start();
         }
 
     }
@@ -115,59 +217,11 @@ public class NetList_Activity extends AppCompatActivity{
 
     }
 
-    public static String[][] parseJson_songlist_click(String ori_content) throws Exception {
-        JSONObject ori_json = new JSONObject(ori_content);
-        JSONArray playlists = ori_json.getJSONArray("songs");
-        String[][] list_song = new String[playlists.length()][4];
-        for(int k= 0;k<playlists.length();k++){
-            JSONObject realdata = playlists.getJSONObject(k);
-            list_song[k][0] = realdata.getString("name");
-            list_song[k][1] = realdata.getString("id");
-            JSONObject all = realdata.getJSONObject("al");
-            list_song[k][2] = all.getString("picUrl");
-            JSONArray art = realdata.getJSONArray("ar");
-            JSONObject arti = art.getJSONObject(0);
-            list_song[k][3] = arti.getString("name");//歌手名称
-        }
-        return list_song;
-    }
-
-
-    public static String[][] parseJson_songlist_search(String ori_content) throws Exception {
-        JSONObject ori_json = new JSONObject(ori_content);
-        JSONObject lists = ori_json.getJSONObject("result");
-        JSONArray playlists = lists.getJSONArray("songs");
-        String[][] list_song = new String[playlists.length()][4];
-        for(int k= 0;k<playlists.length();k++){
-            JSONObject realdata = playlists.getJSONObject(k);
-            list_song[k][0] = realdata.getString("name");
-            list_song[k][1] = realdata.getString("id");
-            JSONArray art = realdata.getJSONArray("artists");
-            JSONObject arti = art.getJSONObject(0);
-            list_song[k][2] = arti.getString("img1v1Url");
-//            String id = realdata.getString("id");
-//            myurl = myurl+id;
-//            String music = connect(myurl);
-//            Log.e("parsejsonmusic",music);
-//            JSONObject ori_json_pic = new JSONObject(music);
-//            if(ori_json_pic.getJSONArray("songs")!=null){
-//                JSONArray data = ori_json_pic.getJSONArray("songs");
-//                JSONObject realdata_pic = data.getJSONObject(0);
-//                JSONObject all = realdata_pic.getJSONObject("al");
-//                list_song[k][2]= all.getString("picUrl");
-//            }else{
-//                list_song[k][2]= null;
-//            }
-            list_song[k][3] = arti.getString("name");//歌手名称
-        }
-        return list_song;
-    }
-
     class MyBaseAdapter extends BaseAdapter {
         @Override
-        public int getCount(){Log.e("lengthhhhhh",String.valueOf(songlist.length));return songlist.length;}
+        public int getCount(){return song_nets.size();}
         @Override
-        public Object getItem(int i){return songlist[i][0];}
+        public Object getItem(int i){return song_nets.get(i).getTitle();}
         @Override
         public long getItemId(int i){return i;}
 
@@ -179,15 +233,15 @@ public class NetList_Activity extends AppCompatActivity{
             TextView tv_songs=view.findViewById(R.id.song_name);
             TextView tv_singer=view.findViewById(R.id.singer);
 
-
-            try {
-                iv_cover.setImageBitmap(frag2.getCover(songlist[i][2]));
-            } catch (Exception e) {
-                e.printStackTrace();
-            };
-            tv_songs.setText(songlist[i][0]);
-            tv_singer.setText(songlist[i][3]);
+            iv_cover.setImageBitmap(song_nets.get(i).getCover());
+            tv_songs.setText(song_nets.get(i).getTitle());
+            tv_singer.setText(song_nets.get(i).getSinger());
             return view;
         }
+    }
+
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
     }
 }

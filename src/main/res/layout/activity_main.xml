@@ -22,7 +22,6 @@
         android:layout_height="48dp"
         android:id="@+id/touch_bar"
         android:orientation="horizontal"
-        android:layout_marginBottom="20dp"
         android:clickable="true"
         android:focusable="true">
         <de.hdodenhof.circleimageview.CircleImageView
@@ -30,11 +29,11 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_marginStart="16dp"
-            android:background="@drawable/muse1"
             app:civ_border_width="1dp"
             app:civ_border_color="@color/sky_blue"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
+<!--        android:background="@drawable/muse1"-->
         <TextView
             android:id="@+id/song_name"
             android:layout_width="0dp"
@@ -50,19 +49,19 @@
             android:textSize="18sp"
             app:layout_constraintStart_toEndOf="@id/iv_music"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/btn_porc"/>
+            app:layout_constraintEnd_toStartOf="@id/btn_next"/>
         <ImageView
-            android:id="@+id/btn_porc"
+            android:id="@+id/btn_next"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_marginEnd="16dp"
             android:layout_marginTop="12dp"
             android:gravity="center_vertical"
             android:textSize="25sp"
-            app:srcCompat="@drawable/btn_next"
             tools:ignore="ContentDescription,VectorDrawableCompat"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
+<!--        app:srcCompat="@drawable/btn_next"-->
         <TextView
             android:id="@+id/count"
             android:layout_width="0dp"
@@ -90,35 +89,54 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
-    <LinearLayout
+
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginBottom="20dp">
-        <TextView
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="5dp">
+        <ImageButton
             android:id="@+id/menu1"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="@string/songs"
-            android:textSize="25sp"/>
-        <TextView
+            android:layout_margin="8dp"
+            app:srcCompat="@drawable/ic_songs"
+            tools:ignore="ContentDescription,VectorDrawableCompat"
+            android:background="@drawable/btn_bg_afclick"
+            android:scaleType="fitCenter"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/menu2"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:contentDescription="@string/circ"/>
+        <ImageButton
             android:id="@+id/menu2"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_margin="8dp"
             android:layout_weight="1"
-            android:gravity="center"
-            android:text="@string/favorite"
-            android:textSize="25sp"/>
-        <TextView
+            android:background="@drawable/btn_bg_afclick"
+            app:srcCompat="@drawable/ic_nets"
+            app:layout_constraintStart_toEndOf="@id/menu1"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/menu3"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+        <ImageButton
             android:id="@+id/menu3"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_margin="8dp"
             android:layout_weight="1"
-            android:gravity="center"
-            android:text="@string/settings"
-            android:textSize="25sp"/>
-    </LinearLayout>
+            android:background="@drawable/btn_bg_afclick"
+            app:srcCompat="@drawable/ic_settings"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@id/menu2"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:contentDescription="@string/shuf"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </LinearLayout>

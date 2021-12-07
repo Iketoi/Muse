@@ -13,6 +13,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
+import androidx.core.content.ContextCompat;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,14 +49,13 @@ public class MusicService extends Service {
                 @Override
                 public void run() {
                     if (player==null) return;
-                    int duration=player.getDuration();//获取歌曲总时长
                     int currentPosition=player.getCurrentPosition();//获取播放进度
-                    Message msg=Music_Activity.handler.obtainMessage();//创建消息对象
+                    Message msg=new Message();//创建消息对象
                     //将音乐的总时长和播放进度封装至消息对象中
                     Bundle bundle=new Bundle();
-                    bundle.putInt("duration",duration);
                     bundle.putInt("currentPosition",currentPosition);
                     msg.setData(bundle);
+                    msg.what=1;
                     //将消息发送到主线程的消息队列
                     Music_Activity.handler.sendMessage(msg);
                 }
@@ -68,24 +68,31 @@ public class MusicService extends Service {
 
     class MusicControl extends Binder{//Binder是一种跨进程的通信方式
         public void play(int songNum){
-            try{
-                play_st(songNum);
-                String dataSource = songList.get(songNum).getDatasource();
-                player.reset();
-                player.setDataSource(dataSource);
-                player.prepare();
-                player.start();
-                addTimer();
-                Music_Activity.animator.start();
-                player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                    @Override
-                    public void onCompletion(MediaPlayer mediaPlayer) {
-                        next(songNum);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try{
+                        String dataSource = songList.get(songNum).getDatasource();
+                        player.reset();
+                        player.setDataSource(dataSource);
+                        player.prepare();
+                        player.start();
+                        addTimer();
+                        player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                            @Override
+                            public void onCompletion(MediaPlayer mediaPlayer) {
+                                next(songNum);
+                            }
+                        });
+                        Message msg = Message.obtain();
+                        msg.what=1;
+                        msg.obj=songNum;
+                        Music_Activity.mhandler.sendMessage(msg);
+                    }catch(Exception e){
+                        e.printStackTrace();
                     }
-                });
-            }catch(Exception e){
-                e.printStackTrace();
-            }
+                }
+            }).start();
         }
         public void pausePlay(){
             player.pause();
@@ -95,11 +102,13 @@ public class MusicService extends Service {
         public void porc() throws IOException {
             if (player.isPlaying()){
                 player.pause();
+                Music_Activity.btn_porc.setImageDrawable(getDrawable(R.drawable.btn_pause));
                 Music_Activity.animator.pause();
             }else{
                 if(!player.isPlaying()){
 //                    Music_Activity.animator.isPaused()
                     player.start();
+                    Music_Activity.btn_porc.setImageDrawable(getDrawable(R.drawable.btn_play));
                     Log.e("player","start");
                     if(Music_Activity.animator.isPaused()){
                         Log.e("animator","ispaused");
@@ -169,16 +178,6 @@ public class MusicService extends Service {
             }
             play(songNum);
         }
-    }
-
-    public void play_st(int songNum){
-        Music_Activity.song_name.setText(songList.get(songNum).getTitle());
-        Music_Activity.iv_music.setImageBitmap(songList.get(songNum).getCover());
-        MainActivity.song_name.setText(songList.get(songNum).getTitle());
-        MainActivity.iv_music.setImageBitmap(songList.get(songNum).getCover());
-        Music_Activity.singer_name.setText(songList.get(songNum).getSinger());
-        Music_Activity.count.setText(String.valueOf(songNum));
-        MainActivity.count.setText(String.valueOf(songNum));
     }
 
     @Override
