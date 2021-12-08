@@ -1,74 +1,88 @@
 package com.example.muse;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import android.content.Intent;
 
 import java.io.ByteArrayOutputStream;
 
 public class frag3 extends Fragment {
-    private View settings;
-    public static frag3 getInstance(int count){
-        frag3 rightFragment = new frag3();
-        Bundle bundle = new Bundle();
-        //将需要传递的字符串以键值对的形式传入bundle
-        bundle.putString("count",String.valueOf(count));
-        rightFragment.setArguments(bundle);
-        return rightFragment;
-    }
+    private static View settings;
+    private static SharedPreferences theme_setting;
+    private static Button theme1, theme2, theme3, theme4;
+
+    public static Handler sharedhandler = new Handler(Looper.myLooper()){
+        @Override
+        public void handleMessage(@NonNull Message msg){
+            super.handleMessage(msg);
+            if(msg.what==1){
+                theme1 = settings.findViewById(R.id.btn_theme1);
+                theme2 = settings.findViewById(R.id.btn_theme2);
+                theme3 = settings.findViewById(R.id.btn_theme3);
+                theme4 = settings.findViewById(R.id.btn_theme4);
+
+
+                theme1.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        theme_setting.edit().putInt("theme",1).commit();
+                    }
+                });
+                theme2.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        theme_setting.edit().putInt("theme",2).commit();
+                    }
+                });
+                theme3.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        theme_setting.edit().putInt("theme",3).commit();
+                    }
+                });
+                theme4.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        theme_setting.edit().putInt("theme",4).commit();
+                    }
+                });
+            }
+        }
+    };
 
     public View onCreateView(final LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         settings = inflater.inflate(R.layout.setting_layout, null);
-        Button theme1 = settings.findViewById(R.id.btn_theme1);
-        Button theme2 = settings.findViewById(R.id.btn_theme2);
 
-        int count;
+        theme_setting = getActivity().getSharedPreferences("theme", Context.MODE_PRIVATE);
 
-        Bundle bundle = this.getArguments();
-        String frag3_count = bundle.getString("count");
-        count = Integer.parseInt(frag3_count);
-        Log.e("frag3_count",String.valueOf(count));
-
-
-
-
-        theme1.setOnClickListener(new View.OnClickListener() {
+        new Thread(new Runnable() {
             @Override
-            public void onClick(View view) {
-                sendIntent(0,count);
+            public void run() {
+                Message msg = Message.obtain();
+                msg.what=1;
+                sharedhandler.sendMessage(msg);
             }
-        });
-        theme2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sendIntent(1,count);
-            }
-        });
+        }).start();
+
 
         return settings;
 
     }
 
-    public void sendIntent(int theme, int count){
-        Intent intent = new Intent(frag3.this.getContext(),MainActivity.class);Bundle bd = new Bundle();
-        bd.putInt("theme",theme);
-        bd.putString("songname",MainActivity.songList.get(count).getTitle());
-        Bitmap cover = MainActivity.songList.get(count).getCover();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        cover.compress(Bitmap.CompressFormat.PNG, 100, baos);
-        byte[] coverlist = new byte[MainActivity.songList.get(count).getCover().getByteCount()];
-        coverlist = baos.toByteArray();
-        bd.putByteArray("cover",coverlist);
-        intent.putExtra("bundle",bd);
-        startActivity(intent);
-    }
 
 
 }

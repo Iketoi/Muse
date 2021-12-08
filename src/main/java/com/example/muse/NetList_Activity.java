@@ -1,6 +1,7 @@
 package com.example.muse;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -28,6 +29,7 @@ public class NetList_Activity extends AppCompatActivity{
     private static String listurl = "http://139.196.76.67:3000/playlist/track/all?id=";
     private static String result;
     private static String searchurl="http://139.196.76.67:3000/search?keywords=";
+    private static Bitmap cover;
     private static ListView listview;
     private static TextView loading,total,progress;
     public static ArrayList<Song_Net> song_nets;
@@ -38,11 +40,7 @@ public class NetList_Activity extends AppCompatActivity{
             super.handleMessage(msg);
             if(msg.what==0){
                 song_nets = (ArrayList<Song_Net>) msg.obj;
-                MyBaseAdapter myBaseAdapter = new MyBaseAdapter();
-                loading.setText("");
-                total.setText("");
-                progress.setText("");
-                listview.setAdapter(myBaseAdapter);
+                listview= findViewById(R.id.lv);
                 listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
@@ -50,7 +48,10 @@ public class NetList_Activity extends AppCompatActivity{
                         intent.putExtra("id",song_nets.get(i).getId());
                         intent.putExtra("position",String.valueOf(i));
                         MainActivity.netid.setText(song_nets.get(i).getId());
-                        MainActivity.musicControl.pausePlay();
+                        if(MainActivity.conn_net!=null){
+//                            MainActivity.musicControl.pausePlay();
+                        }
+                        MainActivity.count.setText(String.valueOf(i));
                         if(!MainActivity.playmode){
                             MainActivity.playmode=true;
                             Log.e("playmode",String.valueOf(MainActivity.playmode));
@@ -72,9 +73,7 @@ public class NetList_Activity extends AppCompatActivity{
             if(msg.what==1){
                 loading = findViewById(R.id.loading);
                 song_nets = (ArrayList<Song_Net>) msg.obj;
-                MyBaseAdapter myBaseAdapter = new MyBaseAdapter();
-                listview.setAdapter(myBaseAdapter);
-                loading.setText("");
+                listview= findViewById(R.id.lv);
                 listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
@@ -82,7 +81,10 @@ public class NetList_Activity extends AppCompatActivity{
                         intent.putExtra("id",song_nets.get(i).getId());
                         intent.putExtra("position",String.valueOf(i));
                         MainActivity.netid.setText(song_nets.get(i).getId());
-                        MainActivity.musicControl.pausePlay();
+                        if(MainActivity.conn_net!=null){
+//                            MainActivity.musicControl.pausePlay();
+                        }
+                        MainActivity.count.setText(String.valueOf(i));
                         if(!MainActivity.playmode){
                             MainActivity.playmode=true;
                             Log.e("playmode",String.valueOf(MainActivity.playmode));
@@ -100,6 +102,26 @@ public class NetList_Activity extends AppCompatActivity{
                         startActivity(intent);
                     }
                 } );
+            }
+        }
+    };
+
+    public static Handler imageviewhandler = new Handler(Looper.myLooper()){
+        @Override
+        public void handleMessage(@NonNull Message msg){
+            super.handleMessage(msg);
+            if(msg.what==1){
+                cover = (Bitmap) msg.obj;
+                Bundle bundle = msg.getData();
+                int pro = bundle.getInt("progress");
+                song_nets.get(pro).setCover(cover);
+//                MyBaseAdapter_iv myBaseAdapter_iv = new MyBaseAdapter_iv();
+                MyBaseAdapter myBaseAdapter = new MyBaseAdapter();
+                listview.setAdapter(myBaseAdapter);
+                loading.setText("");
+                total.setText("");
+                progress.setText("");
+//                listview.setAdapter(myBaseAdapter_iv);
             }
         }
     };
@@ -132,14 +154,13 @@ public class NetList_Activity extends AppCompatActivity{
     }
 
     public void init() throws Exception{
-        listview= findViewById(R.id.lv);
+        Intent intent = getIntent();
         total = findViewById(R.id.total);
         progress = findViewById(R.id.progress);
         loading = findViewById(R.id.loading);
-        Intent intent = getIntent();
         if(intent.hasExtra("id")){
             id = intent.getStringExtra("id");
-            listurl = listurl+id+"&limit=15";
+            listurl = listurl+id+"&limit=50";
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -162,7 +183,7 @@ public class NetList_Activity extends AppCompatActivity{
         }
         if(intent.hasExtra("keyword")){
             keyword = intent.getStringExtra("keyword");
-            searchurl = searchurl+keyword;
+            searchurl = searchurl+keyword+"&limit=5";
             Log.e("searchurl",searchurl);
             new Thread(new Runnable() {
                 @Override
@@ -217,7 +238,7 @@ public class NetList_Activity extends AppCompatActivity{
 
     }
 
-    class MyBaseAdapter extends BaseAdapter {
+    public static class MyBaseAdapter extends BaseAdapter {
         @Override
         public int getCount(){return song_nets.size();}
         @Override
@@ -228,10 +249,11 @@ public class NetList_Activity extends AppCompatActivity{
         @Override
         public View getView(int i ,View convertView, ViewGroup parent) {
 
-            View view=View.inflate(NetList_Activity.this.getApplicationContext(),R.layout.item_song,null);
+            View view=View.inflate(NetList_Activity.listview.getContext(),R.layout.item_song,null);
             ImageView iv_cover=view.findViewById(R.id.cover);
             TextView tv_songs=view.findViewById(R.id.song_name);
             TextView tv_singer=view.findViewById(R.id.singer);
+
 
             iv_cover.setImageBitmap(song_nets.get(i).getCover());
             tv_songs.setText(song_nets.get(i).getTitle());

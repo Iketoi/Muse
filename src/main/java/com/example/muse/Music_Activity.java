@@ -51,12 +51,10 @@ public class Music_Activity extends AppCompatActivity implements View.OnClickLis
         public void handleMessage(@NonNull Message msg){
             super.handleMessage(msg);
             if(msg.what==1){
-
                 animator=ObjectAnimator.ofFloat(iv_music,"rotation",0f,360.0f);
                 animator.setDuration(10000);//动画旋转一周的时间为10秒
                 animator.setInterpolator(new LinearInterpolator());//匀速
                 animator.setRepeatCount(-1);//-1表示设置动画无限循环
-
                 bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
                     @Override
@@ -76,12 +74,10 @@ public class Music_Activity extends AppCompatActivity implements View.OnClickLis
                         musicControl.seekTo(progress);//改变播放进度
                     }
                 });
-
                 int songNum = (int) msg.obj;
                 play_st(songNum);
                 animator.start();
                 Log.e("handler","接收到消息");
-
             }
         }
     };//播放音乐的handler
@@ -101,6 +97,29 @@ public class Music_Activity extends AppCompatActivity implements View.OnClickLis
         public void handleMessage(@NonNull Message msg){
             super.handleMessage(msg);
             if(msg.what==1){
+                animator=ObjectAnimator.ofFloat(iv_music,"rotation",0f,360.0f);
+                animator.setDuration(10000);//动画旋转一周的时间为10秒
+                animator.setInterpolator(new LinearInterpolator());//匀速
+                animator.setRepeatCount(-1);//-1表示设置动画无限循环
+                bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+                    @Override
+                    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                        //进度条改变时，会调用此方法
+                        if (progress==seekBar.getMax()){//当滑动条到末端时，结束动画
+                            animator.pause();//停止播放动画
+                        }
+                    }
+                    @Override
+                    public void onStartTrackingTouch(SeekBar seekBar) {//滑动条开始滑动时调用
+                    }
+                    @Override
+                    public void onStopTrackingTouch(SeekBar seekBar) {//滑动条停止滑动时调用
+                        //根据拖动的进度改变音乐播放进度
+                        int progress=seekBar.getProgress();//获取seekBar的进度
+                        musicControl.seekTo(progress);//改变播放进度
+                    }
+                });
                 if(conn==null){
                     if(getIntent().hasExtra("error")){//从主页点击重新连接服务
                         Log.e("主页点击","已恢复连接");
@@ -177,27 +196,6 @@ public class Music_Activity extends AppCompatActivity implements View.OnClickLis
         }).start();
 
     }
-
-
-//    protected void setStatusBar() {
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {//5.0及以上
-//            View decorView = getWindow().getDecorView();
-//            int option = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-//                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
-//            decorView.setSystemUiVisibility(option);
-//            //根据上面设置是否对状态栏单独设置颜色
-//            if (useThemestatusBarColor) {
-//                getWindow().setStatusBarColor(getResources().getColor(R.color.white));//设置状态栏背景色
-//            } else {
-//                getWindow().setStatusBarColor(Color.TRANSPARENT);//透明
-//            }
-//        }
-//
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && useStatusBarColor) {//android6.0以后可以对状态栏文字颜色和图标进行修改
-//            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-//        }
-//    }
-
 
     public static Handler handler=new Handler(Looper.myLooper()){//创建消息处理器对象
         //在主线程中处理从子线程发送过来的消息

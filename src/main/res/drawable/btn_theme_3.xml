@@ -7,7 +7,7 @@
             xmlns:android="http://schemas.android.com/apk/res/android"
             >
             <!-- 填充的颜色 -->
-            <solid android:color="#ECD189" />
+            <solid android:color="#67E4AA" />
             <corners android:radius="105dip"/>
 
             <!-- padding: Button 里面的文字与Button边界的间隔 -->

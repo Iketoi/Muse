@@ -8,6 +8,7 @@ import android.os.Message;
 import android.util.Log;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -48,19 +49,50 @@ public class Song_NetInfo {
             JSONObject realdata = playlists.getJSONObject(k);
             song_net.setTitle(realdata.getString("name"));
             song_net.setId(realdata.getString("id"));
-            String music = connect(myurl+realdata.getString("id"),"POST");
-            song_net.setUrl(parseJson_songurl(music));
             song_net.setDurationl(Integer.parseInt(realdata.getString("dt")));
             JSONArray art = realdata.getJSONArray("ar");
             JSONObject arti = art.getJSONObject(0);
             song_net.setSinger(arti.getString("name"));
-            JSONObject all = realdata.getJSONObject("al");
-            song_net.setCover(getCover(all.getString("picUrl")));
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    String music = null;
+                    try {
+                        music = connect(myurl+realdata.getString("id"),"POST");
+                        song_net.setUrl(parseJson_songurl(music));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            }).start();
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Bitmap cover = getCover_search(realdata.getString("id"));
+                        Message msg = Message.obtain();
+                        msg.what=1;
+                        msg.obj=cover;
+                        Bundle bundle = new Bundle();
+                        bundle.putInt("progress",progress);
+                        msg.setData(bundle);
+                        NetList_Activity.imageviewhandler.sendMessage(msg);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
             song_nets.add(song_net);
         }
         return song_nets;
 
     }
+
     public static ArrayList<Song_Net> getAllsongs_search(String ori_content) throws Exception {
         ArrayList<Song_Net> song_nets = new ArrayList<>();
         JSONObject ori_json = new JSONObject(ori_content);
@@ -88,12 +120,45 @@ public class Song_NetInfo {
             song_net.setTitle(realdata.getString("name"));
             song_net.setId(realdata.getString("id"));
             song_net.setDurationl(Integer.parseInt(realdata.getString("duration")));
-            String music = connect(myurl+realdata.getString("id"),"POST");
-            song_net.setUrl(parseJson_songurl(music));
             JSONArray art = realdata.getJSONArray("artists");
             JSONObject arti = art.getJSONObject(0);
             song_net.setSinger(arti.getString("name"));
-            song_net.setCover(getCover_search(realdata.getString("id")));
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    String music = null;
+                    try {
+                        music = connect(myurl+realdata.getString("id"),"POST");
+                        song_net.setUrl(parseJson_songurl(music));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            }).start();
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Bitmap cover = getCover_search(realdata.getString("id"));
+                        Message msg = Message.obtain();
+                        msg.what=1;
+                        msg.obj=cover;
+                        Bundle bundle = new Bundle();
+                        bundle.putInt("progress",progress);
+                        msg.setData(bundle);
+                        NetList_Activity.imageviewhandler.sendMessage(msg);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+
+
             song_nets.add(song_net);
         }
         return song_nets;

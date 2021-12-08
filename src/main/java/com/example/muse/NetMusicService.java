@@ -130,12 +130,12 @@ public class NetMusicService extends Service {
         public void porc() throws IOException {
             if (player.isPlaying()){
                 player.pause();
-                NetMusic_Activity.btn_porc.setImageDrawable(getDrawable(R.drawable.btn_pause));
                 NetMusic_Activity.animator.pause();
+                NetMusic_Activity.btn_porc.setImageDrawable(getDrawable(R.drawable.btn_pause));
             }else{
                 if(!player.isPlaying()){
                     player.start();
-                    NetMusic_Activity.btn_porc.setImageDrawable(getDrawable(R.drawable.btn_pause));
+                    NetMusic_Activity.btn_porc.setImageDrawable(getDrawable(R.drawable.btn_play));
                     Log.e("player","start");
                     if(NetMusic_Activity.animator.isPaused()){
                         Log.e("animator","ispaused");
@@ -154,9 +154,11 @@ public class NetMusicService extends Service {
         public void shuffle(){
             if(!isShuffle){
                 isShuffle=true;
+                NetMusic_Activity.btn_shuf.setImageDrawable(getDrawable(R.drawable.btn_shuffle_on));
                 Toast.makeText(NetMusic_Activity.btn_shuf.getContext(), "开启随机播放",Toast.LENGTH_SHORT).show();
             }else{
                 isShuffle=false;
+                NetMusic_Activity.btn_shuf.setImageDrawable(getDrawable(R.drawable.btn_shuf));
                 Toast.makeText(NetMusic_Activity.btn_loop.getContext(), "关闭随机播放",Toast.LENGTH_SHORT).show();
             }
         }
@@ -165,8 +167,10 @@ public class NetMusicService extends Service {
             if(player.isLooping()){
                 player.setLooping(false);
                 Toast.makeText(NetMusic_Activity.btn_loop.getContext(), "已关闭循环",Toast.LENGTH_SHORT).show();
+                NetMusic_Activity.btn_loop.setImageDrawable(getDrawable(R.drawable.btn_loop));
             }else{
                 player.setLooping(true);
+                NetMusic_Activity.btn_loop.setImageDrawable(getDrawable(R.drawable.btn_loop_on));
                 Toast.makeText(NetMusic_Activity.btn_loop.getContext(), "已开启循环",Toast.LENGTH_SHORT).show();
                 player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                     @Override
@@ -178,6 +182,7 @@ public class NetMusicService extends Service {
         }
 
         public void next(int songNum){
+            NetMusic_Activity.btn_porc.setImageDrawable(getDrawable(R.drawable.btn_play));
             if(isShuffle){
                 Random random = new Random();
                 int r= random.nextInt(song_nets.size());
@@ -192,6 +197,7 @@ public class NetMusicService extends Service {
             play(songNum);
         }
         public void prev(int songNum){
+            NetMusic_Activity.btn_porc.setImageDrawable(getDrawable(R.drawable.btn_play));
             if(isShuffle){
                 Random random = new Random();
                 int r= random.nextInt(song_nets.size());
@@ -206,17 +212,6 @@ public class NetMusicService extends Service {
             play(songNum);
         }
     }
-
-//    public void play_st(int songNum){
-//        Music_Activity.song_name.setText(songList.get(songNum).getTitle());
-//        Music_Activity.iv_music.setImageBitmap(songList.get(songNum).getCover());
-//        MainActivity.song_name.setText(songList.get(songNum).getTitle());
-//        MainActivity.iv_music.setImageBitmap(songList.get(songNum).getCover());
-//        Music_Activity.singer_name.setText(songList.get(songNum).getSinger());
-//        Music_Activity.count.setText(String.valueOf(songNum));
-//        MainActivity.count.setText(String.valueOf(songNum));
-//    }
-
 
     public static String connect(String myurl, String r_type){
         HttpURLConnection con;

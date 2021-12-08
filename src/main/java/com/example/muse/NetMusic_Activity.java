@@ -4,10 +4,10 @@ import static java.lang.Integer.parseInt;
 
 import android.animation.ObjectAnimator;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,7 +17,6 @@ import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
-import android.widget.AdapterView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -26,18 +25,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 
 public class NetMusic_Activity  extends AppCompatActivity implements View.OnClickListener{
@@ -48,14 +37,9 @@ public class NetMusic_Activity  extends AppCompatActivity implements View.OnClic
     public static ImageButton btn_loop,btn_shuf,btn_porc;
     public static ObjectAnimator animator;
     public static NetMusicService.MusicControl musicControl;
-    private static blur blur;
-    private static String result;
-    private final String r_type = "POST";
-    private String musicurl;
     private static ArrayList<Song_Net> song_nets;
-//    private String[] songInfo;
-    private static Bitmap cover,blur_cover;
-//    String name;
+
+    private static SharedPreferences theme_settings;
     Intent intent1,intent2;
     NetMusic_Activity.MyServiceConn conn;
     NetMusic_Activity.MyServiceConn_fa conn1;
@@ -68,10 +52,6 @@ public class NetMusic_Activity  extends AppCompatActivity implements View.OnClic
             super.handleMessage(msg);
             if(msg.what==1){
                 int songNum = (int) msg.obj;
-                animator=ObjectAnimator.ofFloat(iv_music,"rotation",0f,360.0f);
-                animator.setDuration(10000);//动画旋转一周的时间为10秒
-                animator.setInterpolator(new LinearInterpolator());//匀速
-                animator.setRepeatCount(-1);//-1表示设置动画无限循环
                 play_st(songNum);
                 animator.start();
                 Log.e("handler","接收到消息");
@@ -135,79 +115,38 @@ public class NetMusic_Activity  extends AppCompatActivity implements View.OnClic
         }
     };//处理进度条的handler
 
-    private Handler connhandler = new Handler(Looper.myLooper()){
-        @Override
-        public void handleMessage(@NonNull Message msg){
-            super.handleMessage(msg);
-            if(msg.what==1){
-
-                if(conn==null){
-                    if(getIntent().hasExtra("error")){//从主页点击重新连接服务
-                        Log.e("主页点击","已恢复连接");
-                        Intent intent = getIntent();
-                        String position = intent.getStringExtra("position");
-                        count.setText(position);
-                        int count = parseInt(position);
-                        iv_music.setImageBitmap(song_nets.get(count).getCover());
-//                        background.setImageBitmap(cover);
-                        MainActivity.iv_music.setImageBitmap(song_nets.get(count).getCover());
-                        song_name.setText(song_nets.get(count).getTitle());
-                        singer_name.setText(song_nets.get(count).getSinger());
-                        intent2=new Intent(NetMusic_Activity.this,NetMusicService.class);
-                        if(getIntent().hasExtra("stopAni")){//歌曲暂停时从主页点击，重新连接服务并重新设置animator
-                            conn2 = new NetMusic_Activity.MyServiceConn_stopAni();
-                            btn_porc.setImageDrawable(getDrawable(R.drawable.btn_pause));
-                            bindService(intent2,conn2,BIND_AUTO_CREATE);
-                            Log.e("conn2","已连接服务");
-                        }else{
-                            conn1=new NetMusic_Activity.MyServiceConn_fa();
-                            bindService(intent2,conn1,BIND_AUTO_CREATE);
-                        }
-                    }
-                    else{
-                        String position= intent1.getStringExtra("position");
-                        count.setText(position);
-                        int i=parseInt(position);
-                        song_name.setText(song_nets.get(i).getTitle());
-                        MainActivity.song_name.setText(song_nets.get(i).getTitle());
-                        singer_name.setText(song_nets.get(i).getSinger());
-                        iv_music.setImageBitmap(song_nets.get(i).getCover());
-//                        background.setImageBitmap(blur.doBlur(cover,2,true));
-                        MainActivity.iv_music.setImageBitmap(song_nets.get(i).getCover());
-
-                        intent2=new Intent(NetMusic_Activity.this,NetMusicService.class);
-                        conn=new NetMusic_Activity.MyServiceConn();//创建服务连接对象
-                        bindService(intent2,conn,BIND_AUTO_CREATE);//绑定服务
-                    }
-                }
-
-                bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-                    @Override
-                    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                        //进度条改变时，会调用此方法
-                        if (progress==seekBar.getMax()){//当滑动条到末端时，结束动画
-                            animator.pause();//停止播放动画
-                        }
-                    }
-                    @Override
-                    public void onStartTrackingTouch(SeekBar seekBar) {//滑动条开始滑动时调用
-                    }
-                    @Override
-                    public void onStopTrackingTouch(SeekBar seekBar) {//滑动条停止滑动时调用
-                        //根据拖动的进度改变音乐播放进度
-                        int progress=seekBar.getProgress();//获取seekBar的进度
-                        musicControl.seekTo(progress);//改变播放进度
-                    }
-                });
-            }
-        }
-    };//播放音乐的handler
+//    private Handler connhandler = new Handler(Looper.myLooper()){
+//        @Override
+//        public void handleMessage(@NonNull Message msg){
+//            super.handleMessage(msg);
+//            if(msg.what==1){
+//
+//            }
+//        }
+//    };//播放音乐的handler
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_netmusic);
+        bar=findViewById(R.id.bar);
+        theme_settings = getSharedPreferences("theme", Context.MODE_PRIVATE);
+        int theme = theme_settings.getInt("theme",1);
+        switch (theme){
+            case 1:
+                bar.setProgressDrawableTiled(getDrawable(R.drawable.st_seekbar));
+                break;
+            case 2:
+                bar.setProgressDrawableTiled(getDrawable(R.drawable.seekbar_blue));
+                break;
+            case 3:
+                bar.setProgressDrawableTiled(getDrawable(R.drawable.seekbar_green));
+                break;
+            case 4:
+                bar.setProgressDrawableTiled(getDrawable(R.drawable.seekbar_pink));
+                break;
+
+        }
         intent1=getIntent();
         try {
             init();
@@ -219,20 +158,20 @@ public class NetMusic_Activity  extends AppCompatActivity implements View.OnClic
     private void init() throws Exception{
         song_nets = NetList_Activity.song_nets;
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Message msg = Message.obtain();
-                msg.what=1;
-                connhandler.sendMessage(msg);
-            }
-        }).start();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                Message msg = Message.obtain();
+//                msg.what=1;
+//                connhandler.sendMessage(msg);
+//            }
+//        }).start();
 
 
         background = findViewById(R.id.background);
         bar_progress=findViewById(R.id.bar_progress);
         bar_total=findViewById(R.id.bar_total);
-        bar=findViewById(R.id.bar);
+
         song_name=findViewById(R.id.song_name);
         singer_name=findViewById(R.id.singer_name);
         iv_music=findViewById(R.id.iv_music);
@@ -246,6 +185,72 @@ public class NetMusic_Activity  extends AppCompatActivity implements View.OnClic
         findViewById(R.id.btn_loop).setOnClickListener(this);
         findViewById(R.id.btn_porc).setOnClickListener(this);
         findViewById(R.id.btn_shuf).setOnClickListener(this);
+
+        animator=ObjectAnimator.ofFloat(iv_music,"rotation",0f,360.0f);
+        animator.setDuration(10000);//动画旋转一周的时间为10秒
+        animator.setInterpolator(new LinearInterpolator());//匀速
+        animator.setRepeatCount(-1);//-1表示设置动画无限循环
+        if(conn==null){
+            if(getIntent().hasExtra("error")){//从主页点击重新连接服务
+                Log.e("主页点击","已恢复连接");
+                Intent intent = getIntent();
+                String position = intent.getStringExtra("position");
+                count.setText(position);
+                MainActivity.count.setText(position);
+                int count = parseInt(position);
+                iv_music.setImageBitmap(song_nets.get(count).getCover());
+//                        background.setImageBitmap(cover);
+                MainActivity.iv_music.setImageBitmap(song_nets.get(count).getCover());
+                song_name.setText(song_nets.get(count).getTitle());
+                singer_name.setText(song_nets.get(count).getSinger());
+                intent2=new Intent(NetMusic_Activity.this,NetMusicService.class);
+                if(getIntent().hasExtra("stopAni")){//歌曲暂停时从主页点击，重新连接服务并重新设置animator
+                    conn2 = new NetMusic_Activity.MyServiceConn_stopAni();
+                    btn_porc.setImageDrawable(getDrawable(R.drawable.btn_pause));
+                    bindService(intent2,conn2,BIND_AUTO_CREATE);
+                    Log.e("conn2","已连接服务");
+                }else{
+                    conn1=new NetMusic_Activity.MyServiceConn_fa();
+                    bindService(intent2,conn1,BIND_AUTO_CREATE);
+                }
+            }
+            else{
+                String position= intent1.getStringExtra("position");
+                count.setText(position);
+                MainActivity.count.setText(position);
+                int i=parseInt(position);
+                song_name.setText(song_nets.get(i).getTitle());
+                MainActivity.song_name.setText(song_nets.get(i).getTitle());
+                singer_name.setText(song_nets.get(i).getSinger());
+                iv_music.setImageBitmap(song_nets.get(i).getCover());
+//                        background.setImageBitmap(blur.doBlur(cover,2,true));
+                MainActivity.iv_music.setImageBitmap(song_nets.get(i).getCover());
+
+                intent2=new Intent(NetMusic_Activity.this,NetMusicService.class);
+                conn=new NetMusic_Activity.MyServiceConn();//创建服务连接对象
+                bindService(intent2,conn,BIND_AUTO_CREATE);//绑定服务
+            }
+        }
+
+        bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                //进度条改变时，会调用此方法
+                if (progress==seekBar.getMax()){//当滑动条到末端时，结束动画
+                    animator.pause();//停止播放动画
+                }
+            }
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {//滑动条开始滑动时调用
+            }
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {//滑动条停止滑动时调用
+                //根据拖动的进度改变音乐播放进度
+                int progress=seekBar.getProgress();//获取seekBar的进度
+                musicControl.seekTo(progress);//改变播放进度
+            }
+        });
 
 
     }

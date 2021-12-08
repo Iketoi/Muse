@@ -30,7 +30,7 @@
             android:layout_height="48dp"
             android:layout_marginStart="16dp"
             app:civ_border_width="1dp"
-            app:civ_border_color="@color/sky_blue"
+            app:civ_border_color="@color/color_button"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
 <!--        android:background="@drawable/muse1"-->

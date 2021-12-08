@@ -64,11 +64,11 @@ public class frag1 extends Fragment {
             @Override
             public void run() {
                 songList = new ArrayList<>();
-                songList=SongInfo.getAllSongs(Objects.requireNonNull(frag1.this.getActivity()));
+//                songList=SongInfo.getAllSongs(Objects.requireNonNull(frag1.this.getActivity()));
                 Message msg = new Message();
                 msg.what = 1;
                 msg.obj = songList;
-                f1handler.sendMessage(msg);
+//                f1handler.sendMessage(msg);
             }
         }).start();
         return view;

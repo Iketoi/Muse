@@ -1,9 +1,8 @@
 package com.example.muse;
 
+import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -14,7 +13,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -24,18 +22,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.w3c.dom.Text;
-
-import java.io.BufferedReader;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class frag2 extends Fragment {
     public ArrayList<List_Net> list_nets;
@@ -43,8 +33,9 @@ public class frag2 extends Fragment {
     public static String text;
     private static ListView listView;
     private static TextView progress,total,loading;
-    private String songlist_url = "http://139.196.76.67:3000/top/playlist?limit=20";
+    private final String songlist_url = "http://139.196.76.67:3000/top/playlist?limit=30";
     private static String result;
+    private static SharedPreferences savedcontent;
 
     private Handler f2handler = new Handler(Looper.myLooper()){
         @Override
@@ -53,6 +44,7 @@ public class frag2 extends Fragment {
             if(msg.what==0){
                 list_nets = (ArrayList<List_Net>) msg.obj;
                 ImageButton btn_s = view.findViewById(R.id.btn_search);
+                ImageButton btn_f = view.findViewById(R.id.btn_fresh);
                 EditText search = view.findViewById(R.id.item_search);
                 MyBaseAdapter myBaseAdapter = new MyBaseAdapter();
                 listView= view.findViewById(R.id.lv);
@@ -82,6 +74,29 @@ public class frag2 extends Fragment {
 
                     }
                 });
+                btn_f.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                String ori_content = connect(songlist_url);
+                                try {
+                                    list_nets = new ArrayList<>();
+                                    list_nets=List_NetInfo.getAllLists(ori_content);
+                                    Message msg = new Message();
+                                    msg.what=0;
+                                    msg.obj = list_nets;
+                                    f2handler.sendMessage(msg);
+                                    Log.e("position","here");
+                                    Log.e("listinfo_mainthread", String.valueOf(list_nets));
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }).start();
+                    }
+                });
                 Log.e("handler","接收到消息");
             }
         }
@@ -103,29 +118,63 @@ public class frag2 extends Fragment {
         }
     };
 
+    public static Handler sharedhandler = new Handler(Looper.myLooper()){
+        @Override
+        public void handleMessage(@NonNull Message msg){
+            super.handleMessage(msg);
+            if(msg.what==1){
+                String content = (String) msg.obj;
+                savedcontent.edit().putString("savedcontent",content).commit();
+            }
+        }
+    };
+
     public View onCreateView(final LayoutInflater inflater1, ViewGroup container, Bundle savedInstanceState) {
         view = inflater1.inflate(R.layout.frag2_layout, null);
         progress = view.findViewById(R.id.progress);
         total = view.findViewById(R.id.total);
         loading = view.findViewById(R.id.loading);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String ori_content = connect(songlist_url);
-                try {
-                    list_nets = new ArrayList<>();
-                    list_nets=List_NetInfo.getAllLists(ori_content);
-                    Message msg = new Message();
-                    msg.what=0;
-                    msg.obj = list_nets;
-                    f2handler.sendMessage(msg);
-                    Log.e("position","here");
-                    Log.e("listinfo_mainthread", String.valueOf(list_nets));
-                } catch (Exception e) {
-                    e.printStackTrace();
+        savedcontent= getActivity().getSharedPreferences("file", Context.MODE_PRIVATE);
+        if(savedcontent.contains("savedcontent")){
+            String ori_content = savedcontent.getString("savedcontent",null);
+            Log.e("调用",ori_content);
+            list_nets = new ArrayList<>();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        list_nets=List_NetInfo.getAllLists_saved(ori_content);
+                        Message msg = new Message();
+                        msg.what=0;
+                        msg.obj = list_nets;
+                        f2handler.sendMessage(msg);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
-            }
-        }).start();
+            }).start();
+        }else{
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    String ori_content = connect(songlist_url);
+                    try {
+                        list_nets = new ArrayList<>();
+                        list_nets=List_NetInfo.getAllLists(ori_content);
+                        Message msg = new Message();
+                        msg.what=0;
+                        msg.obj = list_nets;
+                        f2handler.sendMessage(msg);
+                        Log.e("position","here");
+                        Log.e("listinfo_mainthread", String.valueOf(list_nets));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+        }
+
+
         return view;
     }
 

@@ -3,17 +3,21 @@ package com.example.muse;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -59,22 +63,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 btn_next.setImageDrawable(getDrawable(R.drawable.btn_next));
                 mAm = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
                 touch_bar = findViewById(R.id.touch_bar);
-                Random random = new Random();
-                int r = random.nextInt(songList.size());
-                MainActivity.count.setText(String.valueOf(r));
+//                Random random = new Random();
+//                int r = random.nextInt(songList.size());
+//                MainActivity.count.setText(String.valueOf(r));
                 touch_bar.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         if(!playmode){//本地播放模式
                             if(!mAm.isMusicActive()){
                                 if(p==-1){//p值为-1时，即刚进入软件，点击touchbar随机播放
-                                    Intent intent=new Intent(MainActivity.this.getApplicationContext(),Music_Activity.class);
-                                    song_name.setText(songList.get(r).getTitle());
-                                    intent.putExtra("position",String.valueOf(r));
-                                    Log.e("发送",String.valueOf(r));
-                                    p=1;
-                                    startActivity(intent);
-                                }else{//p值为1时，可返回本地音乐播放的activity
+//                                    Intent intent=new Intent(MainActivity.this.getApplicationContext(),Music_Activity.class);
+//                                    song_name.setText(songList.get(r).getTitle());
+//                                    intent.putExtra("position",String.valueOf(r));
+//                                    Log.e("发送",String.valueOf(r));
+//                                    p=1;
+//                                    startActivity(intent);
+//                                }else{//p值为1时，可返回本地音乐播放的activity
                                     Intent i = new Intent(MainActivity.this.getApplicationContext(),Music_Activity.class);
                                     i.putExtra("error","isconnected");
                                     int position = Integer.parseInt(count.getText().toString());
@@ -122,20 +126,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     };//处理子线程中的数据
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setStatusBar();
-
+        if (this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+        }else {
+            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},1);
+        }
         setContentView(R.layout.activity_main);
         new Thread(new Runnable() {
             @Override
             public void run() {
-                songList = getSongInfo();
+//                songList = getSongInfo();
                 Message msg = Message.obtain();
                 msg.obj = songList;
                 msg.what=1;
-                handler.sendMessage(msg);
+//                handler.sendMessage(msg);
             }
         }).start();
 
@@ -256,12 +265,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 ft.replace(R.id.content,new frag2());
                 break;
             case R.id.menu3:
-                frag3 frag3_m =frag3.getInstance(position);
-                ft.replace(R.id.content,frag3_m);
+                ft.replace(R.id.content,new frag3());
                 break;
             case R.id.btn_next:
-                musicControl.next(position);
-                animator.start();
+                if(playmode){
+                    musicControl_net.next(position);
+                }else{
+                    musicControl.next(position);
+                }
             default:
                 break;
         }
