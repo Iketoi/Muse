@@ -1,6 +1,8 @@
 package com.example.muse;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -19,6 +21,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -47,7 +50,7 @@ public class frag1 extends Fragment {
                             Log.e("playmode",String.valueOf(MainActivity.playmode));
                         }
                         if(MainActivity.conn_net!=null){
-                            MainActivity.musicControl_net.pausePlay();
+                            MainActivity.musicControl_net.unbind();
                         }
                         startActivity(intent);
 
@@ -60,15 +63,20 @@ public class frag1 extends Fragment {
     @Override
     public View onCreateView(final LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         view = inflater.inflate(R.layout.music_list, null);
+//
         new Thread(new Runnable() {
             @Override
             public void run() {
                 songList = new ArrayList<>();
-//                songList=SongInfo.getAllSongs(Objects.requireNonNull(frag1.this.getActivity()));
+                try {
+                    songList=SongInfo.getAllSongs(frag1.this.getActivity().getApplicationContext());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 Message msg = new Message();
                 msg.what = 1;
                 msg.obj = songList;
-//                f1handler.sendMessage(msg);
+                f1handler.sendMessage(msg);
             }
         }).start();
         return view;
@@ -94,8 +102,10 @@ public class frag1 extends Fragment {
             iv_cover.setImageBitmap(songList.get(i).getCover());
             tv_songs.setText(songList.get(i).getTitle());
             tv_singer.setText(songList.get(i).getSinger());
+
             return view;
         }
     }//继承适配器渲染列表
+
 }
 

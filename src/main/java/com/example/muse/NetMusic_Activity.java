@@ -34,10 +34,11 @@ public class NetMusic_Activity  extends AppCompatActivity implements View.OnClic
     private static TextView bar_progress,bar_total;
     public static TextView song_name,singer_name,count;
     public static ImageView iv_music,background;
-    public static ImageButton btn_loop,btn_shuf,btn_porc;
+    public static ImageButton btn_loop,btn_shuf,btn_porc,btn_download;
     public static ObjectAnimator animator;
     public static NetMusicService.MusicControl musicControl;
     private static ArrayList<Song_Net> song_nets;
+    private static SharedPreferences loop_mode,shuf_mode;
 
     private static SharedPreferences theme_settings;
     Intent intent1,intent2;
@@ -115,16 +116,6 @@ public class NetMusic_Activity  extends AppCompatActivity implements View.OnClic
         }
     };//处理进度条的handler
 
-//    private Handler connhandler = new Handler(Looper.myLooper()){
-//        @Override
-//        public void handleMessage(@NonNull Message msg){
-//            super.handleMessage(msg);
-//            if(msg.what==1){
-//
-//            }
-//        }
-//    };//播放音乐的handler
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -158,16 +149,6 @@ public class NetMusic_Activity  extends AppCompatActivity implements View.OnClic
     private void init() throws Exception{
         song_nets = NetList_Activity.song_nets;
 
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                Message msg = Message.obtain();
-//                msg.what=1;
-//                connhandler.sendMessage(msg);
-//            }
-//        }).start();
-
-
         background = findViewById(R.id.background);
         bar_progress=findViewById(R.id.bar_progress);
         bar_total=findViewById(R.id.bar_total);
@@ -178,13 +159,36 @@ public class NetMusic_Activity  extends AppCompatActivity implements View.OnClic
         btn_loop = findViewById(R.id.btn_loop);
         btn_shuf = findViewById(R.id.btn_shuf);
         btn_porc = findViewById(R.id.btn_porc);
+        btn_download = findViewById(R.id.btn_download);
         count = findViewById(R.id.count);
+
+        loop_mode  = getSharedPreferences("loop_mode", Context.MODE_PRIVATE);
+        boolean loop_modes = loop_mode.getBoolean("loop_mode",false);
+        if(loop_modes){
+            btn_loop.setImageDrawable(getDrawable(R.drawable.btn_loop_on));
+
+            Log.e("loop","on");
+        }else{
+            btn_loop.setImageDrawable(getDrawable(R.drawable.btn_loop));
+            Log.e("loop","off");
+        }
+        shuf_mode  = getSharedPreferences("shuf_mode", Context.MODE_PRIVATE);
+        boolean shuf_modes = shuf_mode.getBoolean("shuf_mode",false);
+        if(shuf_modes){
+            btn_shuf.setImageDrawable(getDrawable(R.drawable.btn_shuffle_on));
+            Log.e("shuf","on");
+        }else{
+            btn_shuf.setImageDrawable(getDrawable(R.drawable.btn_shuf));
+            Log.e("shuf","on");
+        }
+
 
         findViewById(R.id.btn_prev).setOnClickListener(this);
         findViewById(R.id.btn_next).setOnClickListener(this);
         findViewById(R.id.btn_loop).setOnClickListener(this);
         findViewById(R.id.btn_porc).setOnClickListener(this);
         findViewById(R.id.btn_shuf).setOnClickListener(this);
+
 
         animator=ObjectAnimator.ofFloat(iv_music,"rotation",0f,360.0f);
         animator.setDuration(10000);//动画旋转一周的时间为10秒
@@ -252,7 +256,18 @@ public class NetMusic_Activity  extends AppCompatActivity implements View.OnClic
             }
         });
 
+        btn_download.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.e("position",count.getText().toString());
+                int position = parseInt(count.getText().toString());
+                String url = song_nets.get(position).getUrl();
+                String name = song_nets.get(position).getSinger()+song_nets.get(position).getTitle();
+                String id = song_nets.get(position).getId();
+                DownloadUtil.downLoad(NetMusic_Activity.this.getApplicationContext(),url,name,id);
 
+            }
+        });
     }
 
     class MyServiceConn_fa implements ServiceConnection {//用于实现连接服务

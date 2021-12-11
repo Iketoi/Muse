@@ -15,6 +15,7 @@ public class Song {
     private String fileUrl;
     private Bitmap cover;
     private String datasource;
+    private String id;
 
     public String getFileName() {
         return fileName;
@@ -104,13 +105,21 @@ public class Song {
         this.datasource = datasource;
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public Song() {
         super();
     }
 
     public Song(String fileName, String title, int duration, String singer,
                 String album, String year, String type, String size, String fileUrl, Bitmap cover,
-                String datasource) {
+                String datasource, String id) {
         super();
         this.fileName = fileName;
         this.title = title;
@@ -123,6 +132,7 @@ public class Song {
         this.fileUrl = fileUrl;
         this.cover = cover;
         this.datasource = datasource;
+        this.id = id;
     }
 
     @Override

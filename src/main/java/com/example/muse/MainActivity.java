@@ -13,6 +13,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.AudioManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -21,10 +22,13 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.provider.DocumentsContract;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
@@ -52,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static ArrayList<Song> songList;
     public static int p=-1;
     public static boolean playmode=false;
+    private static SharedPreferences loop_mode,shuf_mode;
 
     private Handler handler = new Handler(Looper.myLooper()){
         @Override
@@ -63,22 +68,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 btn_next.setImageDrawable(getDrawable(R.drawable.btn_next));
                 mAm = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
                 touch_bar = findViewById(R.id.touch_bar);
-//                Random random = new Random();
-//                int r = random.nextInt(songList.size());
-//                MainActivity.count.setText(String.valueOf(r));
+
                 touch_bar.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         if(!playmode){//本地播放模式
                             if(!mAm.isMusicActive()){
                                 if(p==-1){//p值为-1时，即刚进入软件，点击touchbar随机播放
-//                                    Intent intent=new Intent(MainActivity.this.getApplicationContext(),Music_Activity.class);
-//                                    song_name.setText(songList.get(r).getTitle());
-//                                    intent.putExtra("position",String.valueOf(r));
-//                                    Log.e("发送",String.valueOf(r));
-//                                    p=1;
-//                                    startActivity(intent);
-//                                }else{//p值为1时，可返回本地音乐播放的activity
+                                    if(songList!=null){
+                                        Random random = new Random();
+                                        int r = random.nextInt(songList.size());
+                                        MainActivity.count.setText(String.valueOf(r));
+                                        Intent intent=new Intent(MainActivity.this.getApplicationContext(),Music_Activity.class);
+                                        song_name.setText(songList.get(r).getTitle());
+                                        intent.putExtra("position",String.valueOf(r));
+                                        Log.e("发送",String.valueOf(r));
+                                        p=1;
+                                        startActivity(intent);
+                                    }
+                                }else{//p值为1时，可返回本地音乐播放的activity
                                     Intent i = new Intent(MainActivity.this.getApplicationContext(),Music_Activity.class);
                                     i.putExtra("error","isconnected");
                                     int position = Integer.parseInt(count.getText().toString());
@@ -132,21 +140,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setStatusBar();
-        if (this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-        }else {
-            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},1);
-        }
+
+//        Uri uri1 = Uri.parse("content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fdata");
+//        Intent intent1 = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+//        intent1.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+//                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+//                | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+//                | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+//        intent1.putExtra(DocumentsContract.EXTRA_INITIAL_URI, uri1);
+//        startActivityForResult(intent1, 11);
+//        if (!(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager())) {
+//            //表明已经有这个权限了
+//            Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+//            startActivity(intent);
+//        }
         setContentView(R.layout.activity_main);
         new Thread(new Runnable() {
             @Override
             public void run() {
-//                songList = getSongInfo();
+                try {
+                    songList = getSongInfo();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 Message msg = Message.obtain();
                 msg.obj = songList;
                 msg.what=1;
-//                handler.sendMessage(msg);
+                handler.sendMessage(msg);
             }
         }).start();
+
+        loop_mode  = getSharedPreferences("loop_mode", Context.MODE_PRIVATE);
+        shuf_mode  = getSharedPreferences("shuf_mode", Context.MODE_PRIVATE);
 
 
 
@@ -175,9 +200,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_next.setOnClickListener(this);
     }
 
-    public ArrayList<Song> getSongInfo(){
+    public ArrayList<Song> getSongInfo() throws Exception {
         songList = new ArrayList<>();
-        songList=SongInfo.getAllSongs(this.getApplicationContext());
+        songList=SongInfo.getAllSongs(MainActivity.this.getApplicationContext());
         return songList;
     }
 
@@ -277,5 +302,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
         }
         ft.commit();
+    }
+
+    @Override
+    protected void onDestroy(){
+        loop_mode.edit().putBoolean("loop_mode",false).commit();
+        shuf_mode.edit().putBoolean("shuf_mode",false).commit();
+        super.onDestroy();
+
     }
 }

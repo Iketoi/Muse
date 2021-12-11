@@ -83,6 +83,7 @@ public class List_NetInfo {
         return list_nets;
 
     }
+
     public static Bitmap getCover(String picurl) throws Exception{
         URL url = new URL(picurl);
         Bitmap cover=null;

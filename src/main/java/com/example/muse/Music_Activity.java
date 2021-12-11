@@ -6,10 +6,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.animation.ObjectAnimator;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,7 +19,6 @@ import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -35,16 +34,16 @@ public class Music_Activity extends AppCompatActivity implements View.OnClickLis
     private static TextView bar_progress,bar_total;
     public static TextView song_name,count,singer_name;
     public static ImageView iv_music;
-    public static ImageButton btn_loop,btn_porc;
+    public static ImageButton btn_loop,btn_porc,btn_shuf;
     public static ObjectAnimator animator;
     public static MusicService.MusicControl musicControl;
     public static ArrayList<Song> songList;
-    protected boolean useThemestatusBarColor = false;
-    protected boolean useStatusBarColor = true;
+    private static SharedPreferences theme_settings;
     Intent intent1,intent2;MyServiceConn conn;
     MyServiceConn_fa conn1;
     MyServiceConn_stopAni conn2;
     private boolean isUnbind =false;//记录服务是否被解绑
+    private static SharedPreferences loop_mode,shuf_mode;
 
     public static Handler mhandler = new Handler(Looper.myLooper()){
         @Override
@@ -162,8 +161,42 @@ public class Music_Activity extends AppCompatActivity implements View.OnClickLis
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        setStatusBar();
         setContentView(R.layout.activity_music);
+        bar=findViewById(R.id.bar);
+        theme_settings = getSharedPreferences("theme", Context.MODE_PRIVATE);
+        int theme = theme_settings.getInt("theme",1);
+        switch (theme){
+            case 1:
+                bar.setProgressDrawableTiled(getDrawable(R.drawable.st_seekbar));
+                break;
+            case 2:
+                bar.setProgressDrawableTiled(getDrawable(R.drawable.seekbar_blue));
+                break;
+            case 3:
+                bar.setProgressDrawableTiled(getDrawable(R.drawable.seekbar_green));
+                break;
+            case 4:
+                bar.setProgressDrawableTiled(getDrawable(R.drawable.seekbar_pink));
+                break;
+
+        }
+        btn_loop = findViewById(R.id.btn_loop);
+
+        btn_shuf = findViewById(R.id.btn_shuf);
+        loop_mode  = getSharedPreferences("loop_mode", Context.MODE_PRIVATE);
+        boolean loop_modes = loop_mode.getBoolean("loop_mode",false);
+        if(loop_modes){
+            btn_loop.setImageDrawable(getDrawable(R.drawable.btn_loop_on));
+        }else{
+            btn_loop.setImageDrawable(getDrawable(R.drawable.btn_loop));
+        }
+        shuf_mode  = getSharedPreferences("shuf_mode", Context.MODE_PRIVATE);
+        boolean shuf_modes = loop_mode.getBoolean("shuf_mode",false);
+        if(shuf_modes){
+            btn_shuf.setImageDrawable(getDrawable(R.drawable.btn_shuffle_on));
+        }else{
+            btn_shuf.setImageDrawable(getDrawable(R.drawable.btn_shuf));
+        }
         intent1=getIntent();
         init();
     }
@@ -176,7 +209,6 @@ public class Music_Activity extends AppCompatActivity implements View.OnClickLis
         song_name=findViewById(R.id.song_name);
         singer_name=findViewById(R.id.singer_name);
         iv_music=findViewById(R.id.iv_music);
-        btn_loop = findViewById(R.id.btn_loop);
         btn_porc = findViewById(R.id.btn_porc);
         count = findViewById(R.id.count);
 

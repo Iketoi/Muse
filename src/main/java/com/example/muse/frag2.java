@@ -3,6 +3,7 @@ package com.example.muse;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -26,6 +27,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Random;
 
 public class frag2 extends Fragment {
     public ArrayList<List_Net> list_nets;
@@ -34,8 +36,10 @@ public class frag2 extends Fragment {
     private static ListView listView;
     private static TextView progress,total,loading;
     private final String songlist_url = "http://139.196.76.67:3000/top/playlist?limit=30";
+    private final String songlist_url_2 ="http://139.196.76.67:3000/top/playlist/highquality";
     private static String result;
     private static SharedPreferences savedcontent;
+    private static boolean sea = false;
 
     private Handler f2handler = new Handler(Looper.myLooper()){
         @Override
@@ -48,6 +52,7 @@ public class frag2 extends Fragment {
                 EditText search = view.findViewById(R.id.item_search);
                 MyBaseAdapter myBaseAdapter = new MyBaseAdapter();
                 listView= view.findViewById(R.id.lv);
+                listView.setVisibility(View.VISIBLE);
                 listView.setAdapter(myBaseAdapter);
                 loading.setText("");
                 progress.setText("");
@@ -77,22 +82,44 @@ public class frag2 extends Fragment {
                 btn_f.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
+                        listView.setVisibility(View.GONE);
+                        loading.setText("加 载 中");
                         new Thread(new Runnable() {
                             @Override
                             public void run() {
-                                String ori_content = connect(songlist_url);
-                                try {
-                                    list_nets = new ArrayList<>();
-                                    list_nets=List_NetInfo.getAllLists(ori_content);
-                                    Message msg = new Message();
-                                    msg.what=0;
-                                    msg.obj = list_nets;
-                                    f2handler.sendMessage(msg);
-                                    Log.e("position","here");
-                                    Log.e("listinfo_mainthread", String.valueOf(list_nets));
-                                } catch (Exception e) {
-                                    e.printStackTrace();
+                                if(sea){
+                                    String ori_content = connect(songlist_url);
+                                    sea = false;
+                                    try {
+                                        list_nets = new ArrayList<>();
+                                        list_nets=List_NetInfo.getAllLists(ori_content);
+                                        Message msg = new Message();
+                                        msg.what=0;
+                                        msg.obj = list_nets;
+                                        f2handler.sendMessage(msg);
+                                        Log.e("position","here");
+                                        Log.e("listinfo_mainthread", String.valueOf(list_nets));
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                }else{
+                                    String ori_content = connect(songlist_url_2);
+                                    sea=true;
+                                    try {
+                                        list_nets = new ArrayList<>();
+                                        list_nets=List_NetInfo.getAllLists(ori_content);
+                                        Message msg = new Message();
+                                        msg.what=0;
+                                        msg.obj = list_nets;
+                                        f2handler.sendMessage(msg);
+                                        Log.e("position","here");
+                                        Log.e("listinfo_mainthread", String.valueOf(list_nets));
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
                                 }
+
+
                             }
                         }).start();
                     }
@@ -157,18 +184,36 @@ public class frag2 extends Fragment {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    String ori_content = connect(songlist_url);
-                    try {
-                        list_nets = new ArrayList<>();
-                        list_nets=List_NetInfo.getAllLists(ori_content);
-                        Message msg = new Message();
-                        msg.what=0;
-                        msg.obj = list_nets;
-                        f2handler.sendMessage(msg);
-                        Log.e("position","here");
-                        Log.e("listinfo_mainthread", String.valueOf(list_nets));
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    if(sea){
+                        String ori_content = connect(songlist_url);
+                        sea = false;
+                        try {
+                            list_nets = new ArrayList<>();
+                            list_nets=List_NetInfo.getAllLists(ori_content);
+                            Message msg = new Message();
+                            msg.what=0;
+                            msg.obj = list_nets;
+                            f2handler.sendMessage(msg);
+                            Log.e("position","here");
+                            Log.e("listinfo_mainthread", String.valueOf(list_nets));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }else{
+                        String ori_content = connect(songlist_url_2);
+                        sea=true;
+                        try {
+                            list_nets = new ArrayList<>();
+                            list_nets=List_NetInfo.getAllLists(ori_content);
+                            Message msg = new Message();
+                            msg.what=0;
+                            msg.obj = list_nets;
+                            f2handler.sendMessage(msg);
+                            Log.e("position","here");
+                            Log.e("listinfo_mainthread", String.valueOf(list_nets));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }).start();

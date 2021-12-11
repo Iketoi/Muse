@@ -197,7 +197,6 @@ public class Song_NetInfo {
             con.setRequestMethod(r_type);
             con.setDoOutput(true);
             int responseCode = con.getResponseCode();
-            Log.e("respondcode",String.valueOf(responseCode));
 
             if(responseCode == HttpURLConnection.HTTP_OK){
                 InputStream inputStream = con.getInputStream();

@@ -1,7 +1,9 @@
 package com.example.muse;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
@@ -36,6 +38,7 @@ public class NetMusicService extends Service {
     public static boolean isShuffle = false;
     private static String result;
     private static ArrayList<Song_Net> song_nets;
+    private static SharedPreferences loop_mode,shuf_mode;
 
 
     public static Handler Nmshandler = new Handler(Looper.myLooper()){
@@ -62,8 +65,9 @@ public class NetMusicService extends Service {
     public void onCreate(){
         super.onCreate();
         player=new MediaPlayer();
+        loop_mode  = getSharedPreferences("loop_mode", Context.MODE_PRIVATE);
+        shuf_mode  = getSharedPreferences("shuf_mode", Context.MODE_PRIVATE);
 
-//        Log.e("song_nets_init",song_nets.get(0).getTitle());
 
 
     }
@@ -155,10 +159,22 @@ public class NetMusicService extends Service {
             if(!isShuffle){
                 isShuffle=true;
                 NetMusic_Activity.btn_shuf.setImageDrawable(getDrawable(R.drawable.btn_shuffle_on));
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        shuf_mode.edit().putBoolean("shuf_mode",true).commit();
+                    }
+                }).start();
                 Toast.makeText(NetMusic_Activity.btn_shuf.getContext(), "开启随机播放",Toast.LENGTH_SHORT).show();
             }else{
                 isShuffle=false;
                 NetMusic_Activity.btn_shuf.setImageDrawable(getDrawable(R.drawable.btn_shuf));
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        shuf_mode.edit().putBoolean("shuf_mode",false).commit();
+                    }
+                }).start();
                 Toast.makeText(NetMusic_Activity.btn_loop.getContext(), "关闭随机播放",Toast.LENGTH_SHORT).show();
             }
         }
@@ -166,11 +182,23 @@ public class NetMusicService extends Service {
         public void setLooping(){
             if(player.isLooping()){
                 player.setLooping(false);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        loop_mode.edit().putBoolean("loop_mode",false).commit();
+                    }
+                }).start();
                 Toast.makeText(NetMusic_Activity.btn_loop.getContext(), "已关闭循环",Toast.LENGTH_SHORT).show();
                 NetMusic_Activity.btn_loop.setImageDrawable(getDrawable(R.drawable.btn_loop));
             }else{
                 player.setLooping(true);
                 NetMusic_Activity.btn_loop.setImageDrawable(getDrawable(R.drawable.btn_loop_on));
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        loop_mode.edit().putBoolean("loop_mode",true).commit();
+                    }
+                }).start();
                 Toast.makeText(NetMusic_Activity.btn_loop.getContext(), "已开启循环",Toast.LENGTH_SHORT).show();
                 player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                     @Override
@@ -211,37 +239,16 @@ public class NetMusicService extends Service {
             }
             play(songNum);
         }
-    }
 
-    public static String connect(String myurl, String r_type){
-        HttpURLConnection con;
-        BufferedReader buffer;
-        StringBuffer resultBuffer;
-        Log.e("runnable","已开启线程");
-        try {
-            URL url = new URL(myurl);
-            con = (HttpURLConnection) url.openConnection();
-            con.setRequestMethod(r_type);
-            con.setDoOutput(true);
-            int responseCode = con.getResponseCode();
-            Log.e("respondcode",String.valueOf(responseCode));
-
-            if(responseCode == HttpURLConnection.HTTP_OK){
-                InputStream inputStream = con.getInputStream();
-                resultBuffer = new StringBuffer();
-                byte[] bytes=new byte[1024];
-                int len=0;
-                while ((len=inputStream.read(bytes))!=-1){
-                    resultBuffer.append(new String(bytes,0,len));
-                }
-                Log.e("netease",resultBuffer.toString());
-                result= resultBuffer.toString();
-            }
-        }catch(Exception e) {
-            e.printStackTrace();
+        public void unbind(){
+            if(player==null) return;
+            if(player.isPlaying()) player.stop();//停止播放音乐
+            player.reset();
+            player.release();//释放占用的资源
+            player=null;//将player置为空
         }
-        return result;
     }
+
 
 
 

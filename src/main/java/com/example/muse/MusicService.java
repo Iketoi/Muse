@@ -2,7 +2,9 @@ package com.example.muse;
 
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.Build;
@@ -13,7 +15,6 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
-import androidx.core.content.ContextCompat;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ public class MusicService extends Service {
     private Timer timer;
     public static ArrayList<Song> songList;
     public static boolean isShuffle = false;
+    private static SharedPreferences loop_mode,shuf_mode;
 
     @Override
     public  IBinder onBind(Intent intent){
@@ -39,6 +41,8 @@ public class MusicService extends Service {
     public void onCreate(){
         super.onCreate();
         player=new MediaPlayer();
+        loop_mode  = getSharedPreferences("loop_mode", Context.MODE_PRIVATE);
+        shuf_mode  = getSharedPreferences("shuf_mode", Context.MODE_PRIVATE);
         songList = MainActivity.songList;
 
     }
@@ -127,9 +131,23 @@ public class MusicService extends Service {
         public void shuffle(){
             if(!isShuffle){
                 isShuffle=true;
+                Music_Activity.btn_shuf.setImageDrawable(getDrawable(R.drawable.btn_shuffle_on));
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        shuf_mode.edit().putBoolean("shuf_mode",true).commit();
+                    }
+                }).start();
                 Toast.makeText(Music_Activity.btn_loop.getContext(), "开启随机播放",Toast.LENGTH_SHORT).show();
             }else{
                 isShuffle=false;
+                Music_Activity.btn_shuf.setImageDrawable(getDrawable(R.drawable.btn_shuf));
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        shuf_mode.edit().putBoolean("shuf_mode",false).commit();
+                    }
+                }).start();
                 Toast.makeText(Music_Activity.btn_loop.getContext(), "关闭随机播放",Toast.LENGTH_SHORT).show();
             }
         }
@@ -137,9 +155,23 @@ public class MusicService extends Service {
         public void setLooping(){
             if(player.isLooping()){
                 player.setLooping(false);
+                Music_Activity.btn_loop.setImageDrawable(getDrawable(R.drawable.btn_loop));
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        loop_mode.edit().putBoolean("loop_mode",false).commit();
+                    }
+                }).start();
                 Toast.makeText(Music_Activity.btn_loop.getContext(), "已关闭循环",Toast.LENGTH_SHORT).show();
             }else{
                 player.setLooping(true);
+                Music_Activity.btn_loop.setImageDrawable(getDrawable(R.drawable.btn_loop_on));
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        loop_mode.edit().putBoolean("loop_mode",true).commit();
+                    }
+                }).start();
                 Toast.makeText(Music_Activity.btn_loop.getContext(), "已开启循环",Toast.LENGTH_SHORT).show();
                 player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                     @Override
@@ -178,6 +210,15 @@ public class MusicService extends Service {
             }
             play(songNum);
         }
+
+        public void unbind(){
+            if(player==null) return;
+            if(player.isPlaying()) player.stop();//停止播放音乐
+            player.reset();
+            player.release();//释放占用的资源
+            player=null;//将player置为空
+        }
+
     }
 
     @Override
